@@ -1824,13 +1824,12 @@ enum Foo foo;
 "#;
 
     let expected_output = r#"
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-#[repr(u32)]
-pub enum Foo {
-    #[default]
-    Zero = 0,
-    One = 1,
-    seven = 7,
+#[derive(Debug, Copy, Clone, Default)]
+pub struct Foo(u32);
+impl Foo {
+    pub const Zero: Foo = Foo(0);
+    pub const One: Foo = Foo(1);
+    pub const seven: Foo = Foo(7);
 }
 "#;
 
@@ -2565,13 +2564,11 @@ impl Default for Foo {
         }
     }
 }
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-#[repr(u32)]
-pub enum __anon_1 {
-    #[default]
-    FOO = 1,
-}
-"#;
+#[derive(Debug, Copy, Clone, Default)]
+pub struct __anon_1(u32);
+impl __anon_1 {
+    pub const FOO: __anon_1 = __anon_1(1);
+}"#;
 
     let mmap = build_btf_mmap(prog_text);
     let btf = btf_from_mmap(&mmap);

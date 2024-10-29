@@ -797,6 +797,8 @@ impl<'s> GenBtf<'s> {
             _ => bail!("Invalid enum size: {}", t.size()),
         };
 
+        let enum_name = self.anon_types.type_name_or_anon(&t);
+
         let mut signed = "u";
         for value in t.iter() {
             if value.value < 0 {
@@ -805,30 +807,21 @@ impl<'s> GenBtf<'s> {
             }
         }
 
-        writeln!(
-            def,
-            r#"#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]"#
-        )?;
-        writeln!(def, r#"#[repr({signed}{repr_size})]"#)?;
-        writeln!(
-            def,
-            r#"pub enum {name} {{"#,
-            name = self.anon_types.type_name_or_anon(&t),
-        )?;
+        writeln!(def, r#"#[derive(Debug, Copy, Clone, Default)]"#)?;
+        writeln!(def, r#"pub struct {enum_name}({signed}{repr_size});"#,)?;
 
-        for (i, value) in t.iter().enumerate() {
-            if i == 0 {
-                writeln!(def, r#"    #[default]"#)?;
-            }
+        writeln!(def, r#"impl {enum_name} {{"#,)?;
+
+        for value in t.iter() {
             writeln!(
                 def,
-                r#"    {name} = {value},"#,
+                r#"    pub const {name}: {enum_name} = {enum_name}({value});"#,
                 name = value.name.unwrap().to_string_lossy(),
                 value = value.value,
             )?;
         }
 
-        writeln!(def, "}}")?;
+        writeln!(def, r#"}}"#,)?;
         Ok(())
     }
 
@@ -852,7 +845,7 @@ impl<'s> GenBtf<'s> {
         // load time and the result can contain multiple variables with the same
         // name, which is could result in invalid generated code.
         if sec_name == "ksyms" {
-            return Ok(())
+            return Ok(());
         }
 
         writeln!(def, r#"#[derive(Debug, Copy, Clone)]"#)?;
